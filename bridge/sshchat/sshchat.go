@@ -72,23 +72,29 @@ func (b *Bsshchat) Send(msg config.Message) (string, error) {
 		return "", nil
 	}
 	b.Log.Debugf("=> Receiving %#v", msg)
+	string_message := ""
 	for _, line := range strings.Split(msg.Text, "\n") {
-		if _, err := b.w.Write([]byte(msg.Username + line + "\r\n")); err != nil {
-			b.Log.Errorf("Could not send extra message: %#v", err)
+		if strings.TrimSpace(line) != "" {
+			string_message += msg.Username + line + "\r\n"
 		}
 	}
 	if msg.Extra != nil {
 		for _, rmsg := range helper.HandleExtra(&msg, b.General) {
 			for _, line := range strings.Split(rmsg.Text, "\n") {
-				if _, err := b.w.Write([]byte(rmsg.Username + line + "\r\n")); err != nil {
-					b.Log.Errorf("Could not send extra message: %#v", err)
+				if strings.TrimSpace(line) != "" {
+					string_message += rmsg.Username + line + "\r\n"
 				}
 			}
 		}
 		if len(msg.Extra["file"]) > 0 {
 			if _, err := b.handleUploadFile(&msg); err != nil {
-				return "", err
+				b.Log.Errorf("Could not send attached file: %#v", err)
 			}
+		}
+	}
+	if string_message != "" {
+		if _, err := b.w.Write([]byte(string_message)); err != nil {
+			b.Log.Errorf("Could not send message: %#v", err)
 		}
 	}
 	return "", nil
