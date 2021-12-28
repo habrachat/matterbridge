@@ -141,9 +141,6 @@ func (b *Bsshchat) handleSSHChat() error {
 				continue
 			}
 			// skip our own messages
-			if !strings.HasPrefix(b.r.Text(), "["+b.GetString("Nick")+"] \x1b") {
-				continue
-			}
 			res := strings.Split(stripPrompt(b.r.Text()), ":")
 			if res[0] == "-> Set theme" {
 				wait = false
@@ -207,6 +204,10 @@ func connectShell(host string, name string, handler func(r io.Reader, w io.Write
 		return err
 	}
 	defer session.Close()
+
+	if err := session.Setenv("TERM", "bot"); err != nil {
+		return err
+	}
 
 	in, err := session.StdinPipe()
 	if err != nil {
