@@ -72,16 +72,23 @@ func (b *Bsshchat) Send(msg config.Message) (string, error) {
 	b.Log.Debugf("=> Receiving %#v", msg)
 	if msg.Extra != nil {
 		for _, rmsg := range helper.HandleExtra(&msg, b.General) {
-			if _, err := b.w.Write([]byte(rmsg.Username + rmsg.Text + "\r\n")); err != nil {
-				b.Log.Errorf("Could not send extra message: %#v", err)
+			for _, line := range strings.Split(rmsg.Text, "\n") {
+				if _, err := b.w.Write([]byte(rmsg.Username + line + "\r\n")); err != nil {
+					b.Log.Errorf("Could not send extra message: %#v", err)
+				}
 			}
 		}
 		if len(msg.Extra["file"]) > 0 {
 			return b.handleUploadFile(&msg)
 		}
+	} else {
+		for _, line := range strings.Split(msg.Text, "\n") {
+			if _, err := b.w.Write([]byte(msg.Username + line + "\r\n")); err != nil {
+				b.Log.Errorf("Could not send extra message: %#v", err)
+			}
+		}
 	}
-	_, err := b.w.Write([]byte(msg.Username + msg.Text + "\r\n"))
-	return "", err
+	return "", nil
 }
 
 /*
