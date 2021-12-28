@@ -3,12 +3,14 @@ package bsshchat
 import (
 	"bufio"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/42wim/matterbridge/bridge"
 	"github.com/42wim/matterbridge/bridge/config"
 	"github.com/42wim/matterbridge/bridge/helper"
-	"github.com/shazow/ssh-chat/sshd"
+
+	"golang.org/x/crypto/ssh"
 )
 
 type Bsshchat struct {
@@ -24,7 +26,7 @@ func New(cfg *bridge.Config) bridge.Bridger {
 func (b *Bsshchat) Connect() error {
 	b.Log.Infof("Connecting %s", b.GetString("Server"))
 
-	// connHandler will be called by 'sshd.ConnectShell()' below
+	// connHandler will be called by 'connectShell()' below
 	// once the connection is established in order to handle it.
 	connErr := make(chan error, 1) // Needs to be buffered.
 	connSignal := make(chan struct{})
@@ -43,7 +45,7 @@ func (b *Bsshchat) Connect() error {
 		// As a successful connection will result in this returning after the Connection
 		// method has already returned point we NEED to have a buffered channel to still
 		// be able to write.
-		connErr <- sshd.ConnectShell(b.GetString("Server"), b.GetString("Nick"), connHandler)
+		connErr <- connectShell(b.GetString("Server"), b.GetString("Nick"), connHandler)
 	}()
 
 	select {
@@ -166,4 +168,57 @@ func (b *Bsshchat) handleUploadFile(msg *config.Message) (string, error) {
 		}
 	}
 	return "", nil
+}
+
+
+func connectShell(host string, name string, handler func(r io.Reader, w io.WriteCloser) error) error {
+	pemBytes, err := os.ReadFile("id_rsa")
+	if err != nil {
+		return err
+	}
+
+	signer, err := ssh.ParsePrivateKey(pemBytes)
+	if err != nil {
+		return err
+	}
+
+	config := &ssh.ClientConfig{
+		User: name,
+		Auth: []ssh.AuthMethod{ssh.PublicKeys(signer)},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
+
+	conn, err := ssh.Dial("tcp", host, config)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	session, err := conn.NewSession()
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+
+	in, err := session.StdinPipe()
+	if err != nil {
+		return err
+	}
+
+	out, err := session.StdoutPipe()
+	if err != nil {
+		return err
+	}
+
+	err = session.Shell()
+	if err != nil {
+		return err
+	}
+
+	_, err = session.SendRequest("ping", true, nil)
+	if err != nil {
+		return err
+	}
+
+	return handler(out, in)
 }
