@@ -61,5 +61,6 @@ func makeHTML(input string) string {
 			blackfriday.EXTENSION_SPACE_HEADERS|
 			blackfriday.EXTENSION_HEADER_IDS|
 			blackfriday.EXTENSION_BACKSLASH_LINE_BREAK|
-			blackfriday.EXTENSION_DEFINITION_LISTS))
+			blackfriday.EXTENSION_DEFINITION_LISTS|
+			blackfriday.EXTENSION_STRIKETHROUGH))
 }
