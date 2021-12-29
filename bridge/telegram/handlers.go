@@ -461,6 +461,24 @@ func (b *Btelegram) handleEntities(rmsg *config.Message, message *tgbotapi.Messa
 			rmsg.Text = strings.Replace(rmsg.Text, string(link), url.String(), 1)
 		}
 
+		if e.Type == "bold" {
+			offset := e.Offset + indexMovedBy
+			rmsg.Text = rmsg.Text[:offset] + "**" + rmsg.Text[offset:offset+e.Length] + "**" + rmsg.Text[offset+e.Length:]
+			indexMovedBy += 4
+		}
+
+		if e.Type == "italic" {
+			offset := e.Offset + indexMovedBy
+			rmsg.Text = rmsg.Text[:offset] + "*" + rmsg.Text[offset:offset+e.Length] + "*" + rmsg.Text[offset+e.Length:]
+			indexMovedBy += 2
+		}
+
+		if e.Type == "strikethrough" {
+			offset := e.Offset + indexMovedBy
+			rmsg.Text = rmsg.Text[:offset] + "~~" + rmsg.Text[offset:offset+e.Length] + "~~" + rmsg.Text[offset+e.Length:]
+			indexMovedBy += 4
+		}
+
 		if e.Type == "code" {
 			offset := e.Offset + indexMovedBy
 			rmsg.Text = rmsg.Text[:offset] + "`" + rmsg.Text[offset:offset+e.Length] + "`" + rmsg.Text[offset+e.Length:]
