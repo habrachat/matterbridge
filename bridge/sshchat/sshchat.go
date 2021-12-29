@@ -72,17 +72,29 @@ func (b *Bsshchat) Send(msg config.Message) (string, error) {
 		return "", nil
 	}
 	b.Log.Debugf("=> Receiving %#v", msg)
+
+	prefix := msg.Username
+	if msg.Event == config.EventUserAction {
+		prefix += "/me "
+	}
+
 	string_message := ""
 	for _, line := range strings.Split(msg.Text, "\n") {
 		if strings.TrimSpace(line) != "" {
-			string_message += msg.Username + line + "\r\n"
+			if line[0] == '/' {
+				line = " " + line
+			}
+			string_message += prefix + line + "\r\n"
 		}
 	}
 	if msg.Extra != nil {
 		for _, rmsg := range helper.HandleExtra(&msg, b.General) {
 			for _, line := range strings.Split(rmsg.Text, "\n") {
 				if strings.TrimSpace(line) != "" {
-					string_message += rmsg.Username + line + "\r\n"
+					if line[0] == '/' {
+						line = " " + line
+					}
+					string_message += prefix + line + "\r\n"
 				}
 			}
 		}
@@ -158,9 +170,15 @@ func (b *Bsshchat) handleSSHChat() error {
 				b.Log.Debugf("<= Message %#v", res)
 				if strings.HasPrefix(text, "** ") {
 					// Emote
-					res := strings.Split(text[3:], " ")
-					rmsg := config.Message{Username: res[0], Text: strings.TrimSpace(strings.Join(res[1:], " ")), Channel: "sshchat", Account: b.Account, UserID: "nick", Event: config.EventUserAction}
-					b.Remote <- rmsg
+					if text[3] == '"' {
+						res := strings.Split(text[3:], "\"")
+						rmsg := config.Message{Username: res[1], Text: strings.TrimSpace(strings.Join(res[2:], "\"")), Channel: "sshchat", Account: b.Account, UserID: "nick", Event: config.EventUserAction}
+						b.Remote <- rmsg
+					} else {
+						res := strings.Split(text[3:], " ")
+						rmsg := config.Message{Username: res[0], Text: strings.TrimSpace(strings.Join(res[1:], " ")), Channel: "sshchat", Account: b.Account, UserID: "nick", Event: config.EventUserAction}
+						b.Remote <- rmsg
+					}
 				} else {
 					// Normal message
 					rmsg := config.Message{Username: res[0], Text: strings.TrimSpace(strings.Join(res[1:], ":")), Channel: "sshchat", Account: b.Account, UserID: "nick"}

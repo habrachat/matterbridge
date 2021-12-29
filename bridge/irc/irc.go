@@ -6,6 +6,7 @@ import (
 	"hash/crc32"
 	"io/ioutil"
 	"net"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -164,6 +165,12 @@ func (b *Birc) Send(msg config.Message) (string, error) {
 	var msgLines []string
 	if b.GetBool("StripMarkdown") {
 		msg.Text = stripmd.Strip(msg.Text)
+	} else {
+		re := regexp.MustCompile(`\b(\*\*|__)|(\*\*|__)\b`)
+		msg.Text = re.ReplaceAllString(msg.Text, "\x02")
+
+		re = regexp.MustCompile(`\b(\*|_)|(\*|_)\b`)
+		msg.Text = re.ReplaceAllString(msg.Text, "\x1d")
 	}
 
 	if b.GetBool("MessageSplit") {
