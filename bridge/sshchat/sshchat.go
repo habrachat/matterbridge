@@ -141,7 +141,8 @@ func (b *Bsshchat) handleSSHChat() error {
 				continue
 			}
 			// skip our own messages
-			res := strings.Split(stripPrompt(b.r.Text()), ":")
+			text := stripPrompt(b.r.Text())
+			res := strings.Split(text, ":")
 			if res[0] == "-> Set theme" {
 				wait = false
 				b.Log.Debugf("mono found, allowing")
@@ -149,8 +150,16 @@ func (b *Bsshchat) handleSSHChat() error {
 			}
 			if !wait {
 				b.Log.Debugf("<= Message %#v", res)
-				rmsg := config.Message{Username: res[0], Text: strings.TrimSpace(strings.Join(res[1:], ":")), Channel: "sshchat", Account: b.Account, UserID: "nick"}
-				b.Remote <- rmsg
+				if strings.HasPrefix(text, "** ") {
+					// Emote
+					res := strings.Split(text[3:], " ")
+					rmsg := config.Message{Username: res[0], Text: strings.TrimSpace(strings.Join(res[1:], " ")), Channel: "sshchat", Account: b.Account, UserID: "nick", Event: config.EventUserAction}
+					b.Remote <- rmsg
+				} else {
+					// Normal message
+					rmsg := config.Message{Username: res[0], Text: strings.TrimSpace(strings.Join(res[1:], ":")), Channel: "sshchat", Account: b.Account, UserID: "nick"}
+					b.Remote <- rmsg
+				}
 			}
 		}
 	}
