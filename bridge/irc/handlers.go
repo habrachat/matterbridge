@@ -237,6 +237,10 @@ func (b *Birc) handlePrivMsg(client *girc.Client, event girc.Event) {
 		rmsg.Text = string(output)
 	}
 
+	rmsg.Text = strings.Replace(rmsg.Text, "\x02", "**", -1)
+	rmsg.Text = strings.Replace(rmsg.Text, "\x1d", "*", -1)
+	rmsg.Text = strings.Replace(rmsg.Text, "\x1e", "~~", -1)
+
 	b.Log.Debugf("<= Sending message from %s on %s to gateway", event.Params[0], b.Account)
 	b.Remote <- rmsg
 }
