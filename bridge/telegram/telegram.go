@@ -100,6 +100,10 @@ func (b *Btelegram) Send(msg config.Message) (string, error) {
 		return b.cacheAvatar(&msg)
 	}
 
+	if msg.Event == config.EventUserAction {
+		msg.Text = "_" + msg.Text + "_"
+	}
+
 	if b.GetString("MessageFormat") == HTMLFormat {
 		msg.Text = makeHTML(html.EscapeString(msg.Text))
 	}
