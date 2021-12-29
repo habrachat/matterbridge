@@ -170,9 +170,15 @@ func (b *Bsshchat) handleSSHChat() error {
 				b.Log.Debugf("<= Message %#v", res)
 				if strings.HasPrefix(text, "** ") {
 					// Emote
-					res := strings.Split(text[3:], " ")
-					rmsg := config.Message{Username: res[0], Text: strings.TrimSpace(strings.Join(res[1:], " ")), Channel: "sshchat", Account: b.Account, UserID: "nick", Event: config.EventUserAction}
-					b.Remote <- rmsg
+					if text[3] == '"' {
+						res := strings.Split(text[3:], "\"")
+						rmsg := config.Message{Username: res[1], Text: strings.TrimSpace(strings.Join(res[2:], "\"")), Channel: "sshchat", Account: b.Account, UserID: "nick", Event: config.EventUserAction}
+						b.Remote <- rmsg
+					} else {
+						res := strings.Split(text[3:], " ")
+						rmsg := config.Message{Username: res[0], Text: strings.TrimSpace(strings.Join(res[1:], " ")), Channel: "sshchat", Account: b.Account, UserID: "nick", Event: config.EventUserAction}
+						b.Remote <- rmsg
+					}
 				} else {
 					// Normal message
 					rmsg := config.Message{Username: res[0], Text: strings.TrimSpace(strings.Join(res[1:], ":")), Channel: "sshchat", Account: b.Account, UserID: "nick"}
