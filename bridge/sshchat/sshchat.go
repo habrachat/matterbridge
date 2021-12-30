@@ -148,6 +148,7 @@ func (b *Bsshchat) handleSSHChat() error {
 		done := b.sshchatKeepAlive()
 		defer close(done)
 	*/
+	wait := true
 	for {
 		if b.r.Scan() {
 			// ignore messages from ourselves
@@ -160,22 +161,29 @@ func (b *Bsshchat) handleSSHChat() error {
 			// skip our own messages
 			text := stripPrompt(b.r.Text())
 			res := strings.Split(text, ":")
-			b.Log.Debugf("<= Message %#v", res)
-			if strings.HasPrefix(text, "** ") {
-				// Emote
-				if text[3] == '"' {
-					res := strings.Split(text[3:], "\"")
-					rmsg := config.Message{Username: res[1], Text: strings.TrimSpace(strings.Join(res[2:], "\"")), Channel: "sshchat", Account: b.Account, UserID: "nick", Event: config.EventUserAction}
-					b.Remote <- rmsg
+			if res[0] == "-> Set theme" {
+				wait = false
+				b.Log.Debugf("mono found, allowing")
+				continue
+			}
+			if !wait {
+				b.Log.Debugf("<= Message %#v", res)
+				if strings.HasPrefix(text, "** ") {
+					// Emote
+					if text[3] == '"' {
+						res := strings.Split(text[3:], "\"")
+						rmsg := config.Message{Username: res[1], Text: strings.TrimSpace(strings.Join(res[2:], "\"")), Channel: "sshchat", Account: b.Account, UserID: "nick", Event: config.EventUserAction}
+						b.Remote <- rmsg
+					} else {
+						res := strings.Split(text[3:], " ")
+						rmsg := config.Message{Username: res[0], Text: strings.TrimSpace(strings.Join(res[1:], " ")), Channel: "sshchat", Account: b.Account, UserID: "nick", Event: config.EventUserAction}
+						b.Remote <- rmsg
+					}
 				} else {
-					res := strings.Split(text[3:], " ")
-					rmsg := config.Message{Username: res[0], Text: strings.TrimSpace(strings.Join(res[1:], " ")), Channel: "sshchat", Account: b.Account, UserID: "nick", Event: config.EventUserAction}
+					// Normal message
+					rmsg := config.Message{Username: res[0], Text: strings.TrimSpace(strings.Join(res[1:], ":")), Channel: "sshchat", Account: b.Account, UserID: "nick"}
 					b.Remote <- rmsg
 				}
-			} else {
-				// Normal message
-				rmsg := config.Message{Username: res[0], Text: strings.TrimSpace(strings.Join(res[1:], ":")), Channel: "sshchat", Account: b.Account, UserID: "nick"}
-				b.Remote <- rmsg
 			}
 		}
 	}
