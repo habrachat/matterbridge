@@ -86,6 +86,12 @@ func GetSubLines(message string, maxLineLength int, clippingMessage string) []st
 
 	var lines []string
 	for _, line := range strings.Split(strings.TrimSpace(message), "\n") {
+		if line == "" {
+			// Prevent sending empty messages, so we'll skip this line
+			// if it has no content.
+			continue
+		}
+
 		if maxLineLength == 0 || len([]byte(line)) <= maxLineLength {
 			lines = append(lines, line)
 			continue
@@ -168,17 +174,23 @@ func HandleDownloadSize(logger *logrus.Entry, msg *config.Message, name string, 
 
 // HandleDownloadData adds the data for a remote file into a Matterbridge gateway message.
 func HandleDownloadData(logger *logrus.Entry, msg *config.Message, name, comment, url string, data *[]byte, general *config.Protocol) {
+	HandleDownloadData2(logger, msg, name, "", comment, url, data, general)
+}
+
+// HandleDownloadData adds the data for a remote file into a Matterbridge gateway message.
+func HandleDownloadData2(logger *logrus.Entry, msg *config.Message, name, id, comment, url string, data *[]byte, general *config.Protocol) {
 	var avatar bool
 	logger.Debugf("Download OK %#v %#v", name, len(*data))
 	if msg.Event == config.EventAvatarDownload {
 		avatar = true
 	}
 	msg.Extra["file"] = append(msg.Extra["file"], config.FileInfo{
-		Name:    name,
-		Data:    data,
-		URL:     url,
-		Comment: comment,
-		Avatar:  avatar,
+		Name:     name,
+		Data:     data,
+		URL:      url,
+		Comment:  comment,
+		Avatar:   avatar,
+		NativeID: id,
 	})
 }
 

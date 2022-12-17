@@ -12,7 +12,7 @@ import (
 	"github.com/42wim/matterbridge/bridge"
 	"github.com/42wim/matterbridge/bridge/config"
 	"github.com/42wim/matterbridge/bridge/helper"
-	matrix "github.com/matrix-org/gomatrix"
+	matrix "github.com/matterbridge/gomatrix"
 )
 
 var (
@@ -48,8 +48,10 @@ type matrixUsername struct {
 
 // SubTextMessage represents the new content of the message in edit messages.
 type SubTextMessage struct {
-	MsgType string `json:"msgtype"`
-	Body    string `json:"body"`
+	MsgType       string `json:"msgtype"`
+	Body          string `json:"body"`
+	FormattedBody string `json:"formatted_body,omitempty"`
+	Format        string `json:"format,omitempty"`
 }
 
 // MessageRelation explains how the current message relates to a previous message.
@@ -62,6 +64,19 @@ type MessageRelation struct {
 type EditedMessage struct {
 	NewContent SubTextMessage  `json:"m.new_content"`
 	RelatedTo  MessageRelation `json:"m.relates_to"`
+	matrix.TextMessage
+}
+
+type InReplyToRelationContent struct {
+	EventID string `json:"event_id"`
+}
+
+type InReplyToRelation struct {
+	InReplyTo InReplyToRelationContent `json:"m.in_reply_to"`
+}
+
+type ReplyMessage struct {
+	RelatedTo InReplyToRelation `json:"m.relates_to"`
 	matrix.TextMessage
 }
 
@@ -133,12 +148,43 @@ func (b *Bmatrix) Send(msg config.Message) (string, error) {
 
 	username := newMatrixUsername(msg.Username)
 
+	body := username.plain + msg.Text
+	formattedBody := username.formatted + helper.ParseMarkdown(msg.Text)
+
+	if b.GetBool("SpoofUsername") {
+		// https://spec.matrix.org/v1.3/client-server-api/#mroommember
+		type stateMember struct {
+			AvatarURL   string `json:"avatar_url,omitempty"`
+			DisplayName string `json:"displayname"`
+			Membership  string `json:"membership"`
+		}
+
+		// TODO: reset username afterwards with DisplayName: null ?
+		m := stateMember{
+			AvatarURL:   "",
+			DisplayName: username.plain,
+			Membership:  "join",
+		}
+
+		_, err := b.mc.SendStateEvent(channel, "m.room.member", b.UserID, m)
+		if err == nil {
+			body = msg.Text
+			formattedBody = helper.ParseMarkdown(msg.Text)
+		}
+	}
+
 	// Make a action /me of the message
 	if msg.Event == config.EventUserAction {
 		m := matrix.TextMessage{
 			MsgType:       "m.emote",
-			Body:          username.plain + msg.Text,
-			FormattedBody: username.formatted + msg.Text,
+			Body:          body,
+			FormattedBody: formattedBody,
+			Format:        "org.matrix.custom.html",
+		}
+
+		if b.GetBool("HTMLDisable") {
+			m.Format = ""
+			m.FormattedBody = ""
 		}
 
 		msgID := ""
@@ -201,20 +247,29 @@ func (b *Bmatrix) Send(msg config.Message) (string, error) {
 
 	// Edit message if we have an ID
 	if msg.ID != "" {
-		rmsg := EditedMessage{TextMessage: matrix.TextMessage{
-			Body:    username.plain + msg.Text,
-			MsgType: "m.text",
-		}}
-		if b.GetBool("HTMLDisable") {
-			rmsg.TextMessage.FormattedBody = username.formatted + "* " + msg.Text
-		} else {
-			rmsg.Format = "org.matrix.custom.html"
-			rmsg.TextMessage.FormattedBody = username.formatted + "* " + helper.ParseMarkdown(msg.Text)
+		rmsg := EditedMessage{
+			TextMessage: matrix.TextMessage{
+				Body:          body,
+				MsgType:       "m.text",
+				Format:        "org.matrix.custom.html",
+				FormattedBody: formattedBody,
+			},
 		}
+
 		rmsg.NewContent = SubTextMessage{
-			Body:    rmsg.TextMessage.Body,
-			MsgType: "m.text",
+			Body:          rmsg.TextMessage.Body,
+			FormattedBody: rmsg.TextMessage.FormattedBody,
+			Format:        rmsg.TextMessage.Format,
+			MsgType:       "m.text",
 		}
+
+		if b.GetBool("HTMLDisable") {
+			rmsg.TextMessage.Format = ""
+			rmsg.TextMessage.FormattedBody = ""
+			rmsg.NewContent.Format = ""
+			rmsg.NewContent.FormattedBody = ""
+		}
+
 		rmsg.RelatedTo = MessageRelation{
 			EventID: msg.ID,
 			Type:    "m.replace",
@@ -236,8 +291,52 @@ func (b *Bmatrix) Send(msg config.Message) (string, error) {
 	if msg.Event == config.EventJoinLeave {
 		m := matrix.TextMessage{
 			MsgType:       "m.notice",
-			Body:          username.plain + msg.Text,
-			FormattedBody: username.formatted + msg.Text,
+			Body:          body,
+			FormattedBody: formattedBody,
+			Format:        "org.matrix.custom.html",
+		}
+
+		if b.GetBool("HTMLDisable") {
+			m.Format = ""
+			m.FormattedBody = ""
+		}
+
+		var (
+			resp *matrix.RespSendEvent
+			err  error
+		)
+
+		err = b.retry(func() error {
+			resp, err = b.mc.SendMessageEvent(channel, "m.room.message", m)
+
+			return err
+		})
+		if err != nil {
+			return "", err
+		}
+
+		return resp.EventID, err
+	}
+
+	if msg.ParentValid() {
+		m := ReplyMessage{
+			TextMessage: matrix.TextMessage{
+				MsgType:       "m.text",
+				Body:          body,
+				FormattedBody: formattedBody,
+				Format:        "org.matrix.custom.html",
+			},
+		}
+
+		if b.GetBool("HTMLDisable") {
+			m.TextMessage.Format = ""
+			m.TextMessage.FormattedBody = ""
+		}
+
+		m.RelatedTo = InReplyToRelation{
+			InReplyTo: InReplyToRelationContent{
+				EventID: msg.ParentID,
+			},
 		}
 
 		var (
@@ -264,7 +363,7 @@ func (b *Bmatrix) Send(msg config.Message) (string, error) {
 		)
 
 		err = b.retry(func() error {
-			resp, err = b.mc.SendText(channel, username.plain+msg.Text)
+			resp, err = b.mc.SendText(channel, body)
 
 			return err
 		})
@@ -282,8 +381,7 @@ func (b *Bmatrix) Send(msg config.Message) (string, error) {
 	)
 
 	err = b.retry(func() error {
-		resp, err = b.mc.SendFormattedText(channel, username.plain+msg.Text,
-			username.formatted+helper.ParseMarkdown(msg.Text))
+		resp, err = b.mc.SendFormattedText(channel, body, formattedBody)
 
 		return err
 	})
@@ -336,6 +434,38 @@ func (b *Bmatrix) handleEdit(ev *matrix.Event, rmsg config.Message) bool {
 
 	rmsg.ID = relation.EventID
 	rmsg.Text = newContent.Body
+	b.Remote <- rmsg
+
+	return true
+}
+
+func (b *Bmatrix) handleReply(ev *matrix.Event, rmsg config.Message) bool {
+	relationInterface, present := ev.Content["m.relates_to"]
+	if !present {
+		return false
+	}
+
+	var relation InReplyToRelation
+	if err := interface2Struct(relationInterface, &relation); err != nil {
+		// probably fine
+		return false
+	}
+
+	body := rmsg.Text
+
+	if !b.GetBool("keepquotedreply") {
+		for strings.HasPrefix(body, "> ") {
+			lineIdx := strings.IndexRune(body, '\n')
+			if lineIdx == -1 {
+				body = ""
+			} else {
+				body = body[(lineIdx + 1):]
+			}
+		}
+	}
+
+	rmsg.Text = body
+	rmsg.ParentID = relation.InReplyTo.EventID
 	b.Remote <- rmsg
 
 	return true
@@ -400,6 +530,11 @@ func (b *Bmatrix) handleEvent(ev *matrix.Event) {
 
 		// Is it an edit?
 		if b.handleEdit(ev, rmsg) {
+			return
+		}
+
+		// Is it a reply?
+		if b.handleReply(ev, rmsg) {
 			return
 		}
 

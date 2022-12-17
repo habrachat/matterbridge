@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"runtime"
@@ -218,7 +217,7 @@ func (a *API) getUsername(runOpts RunOptions) (username string, err error) {
 	doneCh := make(chan error)
 	go func() {
 		defer func() { close(doneCh) }()
-		statusJSON, err := ioutil.ReadAll(output)
+		statusJSON, err := io.ReadAll(output)
 		if err != nil {
 			doneCh <- fmt.Errorf("error reading whoami output: %v", err)
 			return
@@ -303,7 +302,8 @@ func (a *API) startPipes() (err error) {
 
 	cmd := a.runOpts.Command("chat", "notification-settings", fmt.Sprintf("-disable-typing=%v", !a.runOpts.EnableTyping))
 	if err = cmd.Run(); err != nil {
-		return fmt.Errorf("unable to set notifiation settings %v", err)
+		// This is a performance optimization but isn't a fatal error.
+		a.Debug("unable to set notifiation settings %v", err)
 	}
 
 	a.apiCmd = a.runOpts.Command("chat", "api")
@@ -312,7 +312,7 @@ func (a *API) startPipes() (err error) {
 	}
 	output, err := a.apiCmd.StdoutPipe()
 	if err != nil {
-		return fmt.Errorf("unabel to get api stdout: %v", err)
+		return fmt.Errorf("unable to get api stdout: %v", err)
 	}
 	if runtime.GOOS != "windows" {
 		a.apiCmd.ExtraFiles = []*os.File{output.(*os.File)}
@@ -532,7 +532,7 @@ func (a *API) Listen(opts ListenOptions) (*Subscription, error) {
 			case <-done:
 			}
 			if err := p.Wait(); err != nil {
-				stderrBytes, rerr := ioutil.ReadAll(stderr)
+				stderrBytes, rerr := io.ReadAll(stderr)
 				if rerr != nil {
 					stderrBytes = []byte(fmt.Sprintf("failed to get stderr: %v", rerr))
 				}

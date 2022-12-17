@@ -93,7 +93,7 @@ func (b *Bmumble) JoinChannel(channel config.ChannelInfo) error {
 func (b *Bmumble) Send(msg config.Message) (string, error) {
 	// Only process text messages
 	b.Log.Debugf("=> Received local message %#v", msg)
-	if msg.Event != "" && msg.Event != config.EventUserAction {
+	if msg.Event != "" && msg.Event != config.EventUserAction && msg.Event != config.EventJoinLeave {
 		return "", nil
 	}
 
@@ -185,6 +185,7 @@ func (b *Bmumble) doConnect() error {
 		gumbleConfig.Password = password
 	}
 
+	registerNullCodecAsOpus()
 	client, err := gumble.DialWithDialer(new(net.Dialer), b.GetString("Server"), gumbleConfig, &b.tlsConfig)
 	if err != nil {
 		return err

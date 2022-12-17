@@ -43,8 +43,7 @@ type ircConn struct {
 	lastPing time.Time
 	// lastPong is the last successful time that we pinged the server and
 	// received a successful pong back.
-	lastPong  time.Time
-	pingDelay time.Duration
+	lastPong time.Time
 }
 
 // Dialer is an interface implementation of net.Dialer. Use this if you would
@@ -477,7 +476,7 @@ func (c *Client) write(event *Event) {
 func (c *ircConn) rate(chars int) time.Duration {
 	_time := time.Second + ((time.Duration(chars) * time.Second) / 100)
 
-	if c.writeDelay += _time - time.Now().Sub(c.lastWrite); c.writeDelay < 0 {
+	if c.writeDelay += _time - time.Since(c.lastWrite); c.writeDelay < 0 {
 		c.writeDelay = 0
 	}
 
@@ -589,6 +588,7 @@ func (c *Client) pingLoop(ctx context.Context, errs chan error, wg *sync.WaitGro
 
 	started := time.Now()
 	past := false
+	pingSent := false
 
 	for {
 		select {
@@ -604,18 +604,19 @@ func (c *Client) pingLoop(ctx context.Context, errs chan error, wg *sync.WaitGro
 			}
 
 			c.conn.mu.RLock()
-			if time.Since(c.conn.lastPong) > c.Config.PingDelay+(60*time.Second) {
+			if pingSent && time.Since(c.conn.lastPong) > c.Config.PingDelay+(60*time.Second) {
 				// It's 60 seconds over what out ping delay is, connection
 				// has probably dropped.
-				errs <- ErrTimedOut{
+				err := ErrTimedOut{
 					TimeSinceSuccess: time.Since(c.conn.lastPong),
 					LastPong:         c.conn.lastPong,
 					LastPing:         c.conn.lastPing,
 					Delay:            c.Config.PingDelay,
 				}
 
-				wg.Done()
 				c.conn.mu.RUnlock()
+				errs <- err
+				wg.Done()
 				return
 			}
 			c.conn.mu.RUnlock()
@@ -625,6 +626,7 @@ func (c *Client) pingLoop(ctx context.Context, errs chan error, wg *sync.WaitGro
 			c.conn.mu.Unlock()
 
 			c.Cmd.Ping(fmt.Sprintf("%d", time.Now().UnixNano()))
+			pingSent = true
 		case <-ctx.Done():
 			wg.Done()
 			return

@@ -13,7 +13,7 @@ import (
 
 const (
 	eventSpace byte = ' ' // Separator.
-	maxLength       = 510 // Maximum length is 510 (2 for line endings).
+	maxLength  int  = 510 // Maximum length is 510 (2 for line endings).
 )
 
 // cutCRFunc is used to trim CR characters from prefixes/messages.
@@ -52,7 +52,7 @@ func ParseEvent(raw string) (e *Event) {
 		i = 0
 	}
 
-	if raw[0] == messagePrefix {
+	if raw != "" && raw[0] == messagePrefix {
 		// Prefix ends with a space.
 		i = strings.IndexByte(raw, eventSpace)
 
@@ -283,7 +283,6 @@ func (e *Event) Bytes() []byte {
 
 	// Space separated list of arguments.
 	if len(e.Params) > 0 {
-		// buffer.WriteByte(eventSpace)
 		for i := 0; i < len(e.Params); i++ {
 			if i == len(e.Params)-1 && (strings.Contains(e.Params[i], " ") || strings.HasPrefix(e.Params[i], ":") || e.Params[i] == "") {
 				buffer.WriteString(string(eventSpace) + string(messagePrefix) + e.Params[i])
@@ -298,7 +297,9 @@ func (e *Event) Bytes() []byte {
 		buffer.Truncate(maxLength)
 	}
 
-	out := buffer.Bytes()
+	// If we truncated in the middle of a utf8 character, we need to remove
+	// the other (now invalid) bytes.
+	out := bytes.ToValidUTF8(buffer.Bytes(), nil)
 
 	// Strip newlines and carriage returns.
 	for i := 0; i < len(out); i++ {
@@ -621,7 +622,7 @@ func (s *Source) IsHostmask() bool {
 
 // IsServer returns true if this source looks like a server name.
 func (s *Source) IsServer() bool {
-	return len(s.Ident) <= 0 && len(s.Host) <= 0
+	return s.Ident == "" && s.Host == ""
 }
 
 // writeTo is an utility function to write the source to the bytes.Buffer
@@ -636,6 +637,4 @@ func (s *Source) writeTo(buffer *bytes.Buffer) {
 		buffer.WriteByte(prefixHost)
 		buffer.WriteString(s.Host)
 	}
-
-	return
 }

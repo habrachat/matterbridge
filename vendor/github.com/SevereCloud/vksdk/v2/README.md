@@ -1,7 +1,7 @@
 # VK SDK for Golang
 
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/SevereCloud/vksdk/v2/v2)](https://pkg.go.dev/github.com/SevereCloud/vksdk/v2?tab=subdirectories)
-[![VK Developers](https://img.shields.io/badge/developers-%234a76a8.svg?logo=VK&logoColor=white)](https://vk.com/dev/)
+[![VK Developers](https://img.shields.io/badge/developers-%234a76a8.svg?logo=VK&logoColor=white)](https://dev.vk.com/)
 [![codecov](https://codecov.io/gh/SevereCloud/vksdk/branch/master/graph/badge.svg)](https://codecov.io/gh/SevereCloud/vksdk)
 [![VK chat](https://img.shields.io/badge/VK%20chat-%234a76a8.svg?logo=VK&logoColor=white)](https://vk.me/join/AJQ1d6Or8Q00Y_CSOESfbqGt)
 [![release](https://img.shields.io/github/v/tag/SevereCloud/vksdk?label=release)](https://github.com/SevereCloud/vksdk/releases)
@@ -16,11 +16,13 @@
 Version API 5.131.
 
 - [API](https://pkg.go.dev/github.com/SevereCloud/vksdk/v2/api)
-  - 400+ methods
-  - Ability to change the request handler
+  - 500+ methods
   - Ability to modify HTTP client
   - Request Limiter
+  - Support [zstd](https://pkg.go.dev/github.com/SevereCloud/vksdk/v2/api#VK.EnableZstd)
+and [MessagePack](https://pkg.go.dev/github.com/SevereCloud/vksdk/v2/api#VK.EnableMessagePack)
   - Token pool
+  - [OAuth](https://pkg.go.dev/github.com/SevereCloud/vksdk/v2/api/oauth)
 - [Callback API](https://pkg.go.dev/github.com/SevereCloud/vksdk/v2/callback)
   - Tracking tool for users activity in your VK communities
   - Supports all events
@@ -60,6 +62,7 @@ go get github.com/SevereCloud/vksdk/v2@latest
 
 ## Use by
 
+- A simple chat bridge: <https://github.com/42wim/matterbridge>
 - [Joe](https://github.com/go-joe/joe) adapter: <https://github.com/tdakkota/joe-vk-adapter>
 - [Logrus](https://github.com/sirupsen/logrus) hook: <https://github.com/SevereCloud/vkrus>
 

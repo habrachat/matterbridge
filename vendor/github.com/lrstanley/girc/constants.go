@@ -149,7 +149,7 @@ const (
 	RPL_ENDOFWHOWAS       = "369"
 	RPL_LISTSTART         = "321"
 	RPL_LIST              = "322"
-	RPL_LISTEND           = "323"
+	RPL_LISTEND           = "323" //nolint:misspell // it's correct.
 	RPL_UNIQOPIS          = "325"
 	RPL_CHANNELMODEIS     = "324"
 	RPL_NOTOPIC           = "331"
@@ -347,4 +347,5 @@ const (
 	RPL_LOCALUSERS     = "265" // aircd/hybrid/bahamut, used on freenode.
 	RPL_TOPICWHOTIME   = "333" // ircu, used on freenode.
 	RPL_WHOSPCRPL      = "354" // ircu, used on networks with WHOX support.
+	RPL_CREATIONTIME   = "329"
 )

@@ -1,3 +1,126 @@
+# v1.25.2
+
+## Enhancements
+
+- general: Update dependencies (#1851,#1841)
+- mattermost: Support mattermost v7.x (#1852)
+
+## Bugfix
+
+- discord: Fix Unwanted join notifications from one Discord server to another (#1612)
+- discord: Ignore events from other guilds, add nosendjoinpart support (#1846)
+
+This release couldn't exist without the following contributors:
+@wlcx
+
+# v1.25.1
+
+## Enhancements
+
+- matrix: Add KeepQuotedReply option for matrix to fix regression (#1823)
+- slack: Improve Slack attachments formatting (slack) (#1807)
+
+## Bugfix
+
+- general: Update dependencies (#1813,#1822,#1833)
+- mattermost: Add space between filename and URL (mattermost). Fixes #1820
+- matrix: Update matterbridge/gomatrix. Fixes #1772 (#1803)
+- telegram: Do not modify .webm files (telegram). Fixes #17**88 (#1802)
+- telegram: Do not apply any markup to URL entities (telegram) (#1808)
+- telegram: Fix telegram message deletion request (#1818)
+- vk: Fix UploadMessagesPhoto for vk community chat (vk) (#1812)
+
+This release couldn't exist without the following contributors:
+@bd808, @chugunov, @sas1024, @SevereCloud, @ValdikSS
+
+# v1.25.0
+
+## Breaking changes
+
+- whatsapp: deprecated, the library <https://github.com/Rhymen/go-whatsapp> isn't maintained anymore.
+We're switching to <https://github.com/tulir/whatsmeow> but as this uses a GPL3 licensed library we can't provide you with binaries.
+You'll need to build it yourself. More information about this can be found here: <https://github.com/42wim/matterbridge#building-with-whatsapp-beta-multidevice-support>
+
+## New features
+
+- whatsappmulti: whatsapp multidevice support added - more info <https://github.com/42wim/matterbridge#building-with-whatsapp-beta-multidevice-support>
+- general: Add Dockerfile_whatsappmulti for building with WhatsApp Multi-Device support (Whatsmeow) (#1774)
+- telegram: Add UseFullName option (telegram) (#1777)
+- slack: Use slack real name as user name (slack) (#1775)
+
+## Enhancements
+
+- general: Ignore sending file with comment, if comment contains IgnoreMessages value (#1783)
+- general: Update dependencies (#1784)
+- irc: Update lrstanley/girc dep (#1773)
+- slack: Preserve threading for messages with files (slack) (#1781)
+- telegram: Preserve threading from telegram replies (telegram) (#1776)
+- telegram: Multiple media in one message (telegram) (#1779)
+- whatsapp: Add whatsapp deprecation warning (#1792)
+
+## Bugfix
+
+- discord: Change discord non-native threading behaviour (discord) (#1791)
+
+This release couldn't exist without the following contributors:
+@sas1024, @tpxtron
+
+# v1.24.1
+
+## Enhancements
+
+- discord: Switch to discordgo upstream again (#1759)
+- general: Update dependencies and vendor (#1761)
+- general: Create inmessage-logger.tengo (#1688) (#1747)
+- general: Add OpenRC service file (#1746)
+- irc: Refactor utf-8 conversion (irc) (#1767)
+
+## Bugfixes
+
+- irc: Fix panic in irc. Closes #1751 (#1760)
+- mumble: Implement a workaround to signal Opus support (mumble) (#1764)
+- telegram: Fix for complex-formatted Telegram text (#1765)
+- telegram: Fix Telegram channel title in forwards (#1753)
+- telegram: Fix Telegram Problem (unforwarded formatting and skipping of linebreaks) (#1749)
+
+This release couldn't exist without the following contributors:
+@s3lph, @ValdikSS, @reckel-jm, @CyberTailor
+
+# v1.24.0
+
+## New features
+
+- harmony: new protocol added: Add support for Harmony (#1656)
+- irc: Allow binding to IP on IRC (#1640)
+- irc: Add support for client certificate (irc) (#1710)
+- mattermost: Add UseUsername option (mattermost). Fixes #1665 (#1714)
+- mattermost: Add support for using ID in channel config (mattermost) (#1715)
+- matrix: Reply support for Matrix (#1664)
+- telegram: Add Telegram Bot Command /chatId (telegram) (#1703)
+
+## Enhancements
+
+- general: Update dependencies/vendor (#1659)
+- discord: Add more debug options for discord (#1712)
+- docker: Use Alpine stable again in Dockerfile (#1643)
+- mattermost: Log eventtype in debug (mattermost) (#1676)
+- mattermost: Add more ignore debug messages (mattermost) (#1678)
+- slack: Add support for deleting files from slack to discord. Fixes #1705 (#1709)
+- telegram: Add support for code blocks in telegram (#1650)
+- telegram: Update telegram-bot-api to v5 (#1660)
+- telegram: Add comments to messages (telegram) (#1652)
+- telegram: Add support for sender_chat (telegram) (#1677)
+- vk: Remove GroupID (vk) (#1668)
+
+## Bugfix
+
+- mattermost: Use current parentID if rootId is not set (mattermost) (#1675)
+- matrix: Make HTMLDisable work correct (matrix) (#1716)
+- whatsapp: Make EditSuffix option actually work (whatsapp). Fixes #1510 (#1728)
+
+This release couldn't exist without the following contributors:
+@DavyJohnesev, @GoliathLabs, @pontaoski, @PeGaSuS-Coder, @dependabot[bot], @vpzomtrrfrt, @SevereCloud, @soloam, @YashRE42, @danwalmsley, @SuperSandro2000, @inzanity
+
 # v1.23.2
 
 If you're running whatsapp you should update.
@@ -5,6 +128,9 @@ If you're running whatsapp you should update.
 ## Bugfix
 
 - whatsapp: Update go-whatsapp version (#1630)
+
+This release couldn't exist without the following contributors:
+@snikpic
 
 # v1.23.1
 
@@ -19,6 +145,9 @@ If you're running mattermost 6 you should update.
 - xmpp: Do not fail on no avatar data (xmpp) #1529 (#1627)
 - xmpp: Use a new msgID when replacing messages (xmpp). Fixes #1584 (#1623)
 - zulip: Add better error handling on Zulip (#1589)
+
+This release couldn't exist without the following contributors:
+@Polynomdivision, @minecraftchest1, @alexmv
 
 # v1.23.0
 

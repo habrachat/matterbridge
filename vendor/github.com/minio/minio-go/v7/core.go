@@ -63,8 +63,8 @@ func (c Core) CopyObject(ctx context.Context, sourceBucket, sourceObject, destBu
 // CopyObjectPart - creates a part in a multipart upload by copying (a
 // part of) an existing object.
 func (c Core) CopyObjectPart(ctx context.Context, srcBucket, srcObject, destBucket, destObject string, uploadID string,
-	partID int, startOffset, length int64, metadata map[string]string) (p CompletePart, err error) {
-
+	partID int, startOffset, length int64, metadata map[string]string,
+) (p CompletePart, err error) {
 	return c.copyObjectPartDo(ctx, srcBucket, srcObject, destBucket, destObject, uploadID,
 		partID, startOffset, length, metadata)
 }
@@ -124,10 +124,4 @@ func (c Core) PutBucketPolicy(ctx context.Context, bucket, bucketPolicy string) 
 // matching etag, modtime etc.
 func (c Core) GetObject(ctx context.Context, bucketName, objectName string, opts GetObjectOptions) (io.ReadCloser, ObjectInfo, http.Header, error) {
 	return c.getObject(ctx, bucketName, objectName, opts)
-}
-
-// StatObject is a lower level API implemented to support special
-// conditions matching etag, modtime on a request.
-func (c Core) StatObject(ctx context.Context, bucketName, objectName string, opts StatObjectOptions) (ObjectInfo, error) {
-	return c.statObject(ctx, bucketName, objectName, opts)
 }

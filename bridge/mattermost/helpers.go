@@ -183,6 +183,7 @@ func (b *Bmattermost) sendWebhook(msg config.Message) (string, error) {
 	if b.GetBool("PrefixMessagesWithNick") {
 		msg.Text = msg.Username + msg.Text
 	}
+
 	if msg.Extra != nil {
 		// this sends a message only if we received a config.EVENT_FILE_FAILURE_SIZE
 		for _, rmsg := range helper.HandleExtra(&msg, b.General) {
@@ -206,7 +207,7 @@ func (b *Bmattermost) sendWebhook(msg config.Message) (string, error) {
 			for _, f := range msg.Extra["file"] {
 				fi := f.(config.FileInfo)
 				if fi.URL != "" {
-					msg.Text += fi.URL
+					msg.Text += " " + fi.URL
 				}
 			}
 		}
@@ -241,11 +242,17 @@ func (b *Bmattermost) skipMessage(message *matterclient.Message) bool {
 		if b.GetBool("nosendjoinpart") {
 			return true
 		}
+
+		channelName := b.getChannelName(message.Post.ChannelId)
+		if channelName == "" {
+			channelName = message.Channel
+		}
+
 		b.Log.Debugf("Sending JOIN_LEAVE event from %s to gateway", b.Account)
 		b.Remote <- config.Message{
 			Username: "system",
 			Text:     message.Text,
-			Channel:  message.Channel,
+			Channel:  channelName,
 			Account:  b.Account,
 			Event:    config.EventJoinLeave,
 		}
@@ -304,11 +311,17 @@ func (b *Bmattermost) skipMessage6(message *matterclient6.Message) bool {
 		if b.GetBool("nosendjoinpart") {
 			return true
 		}
+
+		channelName := b.getChannelName(message.Post.ChannelId)
+		if channelName == "" {
+			channelName = message.Channel
+		}
+
 		b.Log.Debugf("Sending JOIN_LEAVE event from %s to gateway", b.Account)
 		b.Remote <- config.Message{
 			Username: "system",
 			Text:     message.Text,
-			Channel:  message.Channel,
+			Channel:  channelName,
 			Account:  b.Account,
 			Event:    config.EventJoinLeave,
 		}
@@ -329,13 +342,14 @@ func (b *Bmattermost) skipMessage6(message *matterclient6.Message) bool {
 	// Ignore messages sent from matterbridge
 	if message.Post.Props != nil {
 		if _, ok := message.Post.Props["matterbridge_"+b.uuid].(bool); ok {
-			b.Log.Debugf("sent by matterbridge, ignoring")
+			b.Log.Debug("sent by matterbridge, ignoring")
 			return true
 		}
 	}
 
 	// Ignore messages sent from a user logged in as the bot
 	if b.mc6.User.Username == message.Username {
+		b.Log.Debug("message from same user as bot, ignoring")
 		return true
 	}
 
@@ -346,6 +360,7 @@ func (b *Bmattermost) skipMessage6(message *matterclient6.Message) bool {
 
 	// ignore messages from other teams than ours
 	if message.Raw.GetData()["team_id"].(string) != b.TeamID {
+		b.Log.Debug("message from other team, ignoring")
 		return true
 	}
 
@@ -373,4 +388,31 @@ func (b *Bmattermost) getVersion() string {
 	defer resp.Body.Close()
 
 	return resp.Header.Get("X-Version-Id")
+}
+
+func (b *Bmattermost) getChannelID(name string) string {
+	idcheck := strings.Split(name, "ID:")
+	if len(idcheck) > 1 {
+		return idcheck[1]
+	}
+
+	if b.mc6 != nil {
+		return b.mc6.GetChannelID(name, b.TeamID)
+	}
+
+	return b.mc.GetChannelId(name, b.TeamID)
+}
+
+func (b *Bmattermost) getChannelName(id string) string {
+	b.channelsMutex.RLock()
+	defer b.channelsMutex.RUnlock()
+
+	for _, c := range b.channelInfoMap {
+		if c.Name == "ID:"+id {
+			// if we have ID: specified in our gateway configuration return this
+			return c.Name
+		}
+	}
+
+	return ""
 }

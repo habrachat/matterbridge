@@ -64,7 +64,7 @@ func possibleCapList(c *Client) map[string][]string {
 	if !c.Config.DisableSTS && !c.Config.SSL {
 		// If fallback supported, and we failed recently, don't try negotiating STS.
 		// ONLY do this fallback if we're expired (primarily useful during the first
-		// sts negotation).
+		// sts negotiation).
 		if time.Since(c.state.sts.lastFailed) < 5*time.Minute && !c.Config.DisableSTSFallback {
 			c.debug.Println("skipping strict transport policy negotiation; failed within the last 5 minutes")
 		} else {
@@ -106,7 +106,7 @@ func parseCap(raw string) map[string]map[string]string {
 			if j < 0 {
 				out[parts[i][:val]][option] = ""
 			} else {
-				out[parts[i][:val]][option[:j]] = option[j+1 : len(option)]
+				out[parts[i][:val]][option[:j]] = option[j+1:]
 			}
 		}
 	}

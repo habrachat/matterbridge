@@ -1,18 +1,60 @@
-<p align="center"><a href="https://godoc.org/github.com/lrstanley/girc"><img width="270" src="http://i.imgur.com/DEnyrdB.png"></a></p>
-<p align="center">girc, a flexible IRC library for Go</p>
+<p align="center"><a href="https://pkg.go.dev/github.com/lrstanley/girc"><img width="270" src="http://i.imgur.com/DEnyrdB.png"></a></p>
+<!-- template:begin:header -->
+<!-- do not edit anything in this "template" block, its auto-generated -->
+
+<p align="center">girc -- :bomb: girc is a flexible IRC library for Go :ok_hand:</p>
 <p align="center">
-  <a href="https://travis-ci.org/lrstanley/girc"><img src="https://travis-ci.org/lrstanley/girc.svg?branch=master" alt="Build Status"></a>
-  <a href="https://codecov.io/gh/lrstanley/girc"><img src="https://codecov.io/gh/lrstanley/girc/branch/master/graph/badge.svg" alt="Coverage Status"></a>
-  <a href="https://godoc.org/github.com/lrstanley/girc"><img src="https://godoc.org/github.com/lrstanley/girc?status.png" alt="GoDoc"></a>
-  <a href="https://goreportcard.com/report/github.com/lrstanley/girc"><img src="https://goreportcard.com/badge/github.com/lrstanley/girc" alt="Go Report Card"></a>
-  <a href="https://byteirc.org/channel/%23%2Fdev%2Fnull"><img src="https://img.shields.io/badge/ByteIRC-%23%2Fdev%2Fnull-blue.svg" alt="IRC Chat"></a>
+  <a href="https://github.com/lrstanley/girc/tags">
+    <img title="Latest Semver Tag" src="https://img.shields.io/github/v/tag/lrstanley/girc?style=flat-square">
+  </a>
+  <a href="https://github.com/lrstanley/girc/commits/master">
+    <img title="Last commit" src="https://img.shields.io/github/last-commit/lrstanley/girc?style=flat-square">
+  </a>
+
+  <a href="https://github.com/lrstanley/girc/actions?query=workflow%3Atest+event%3Apush">
+    <img title="GitHub Workflow Status (test @ master)" src="https://img.shields.io/github/workflow/status/lrstanley/girc/test/master?label=test&style=flat-square&event=push">
+  </a>
+
+  <a href="https://codecov.io/gh/lrstanley/girc">
+    <img title="Code Coverage" src="https://img.shields.io/codecov/c/github/lrstanley/girc/master?style=flat-square">
+  </a>
+
+  <a href="https://pkg.go.dev/github.com/lrstanley/girc">
+    <img title="Go Documentation" src="https://pkg.go.dev/badge/github.com/lrstanley/girc?style=flat-square">
+  </a>
+  <a href="https://goreportcard.com/report/github.com/lrstanley/girc">
+    <img title="Go Report Card" src="https://goreportcard.com/badge/github.com/lrstanley/girc?style=flat-square">
+  </a>
 </p>
+<p align="center">
+  <a href="https://github.com/lrstanley/girc/issues?q=is:open+is:issue+label:bug">
+    <img title="Bug reports" src="https://img.shields.io/github/issues/lrstanley/girc/bug?label=issues&style=flat-square">
+  </a>
+  <a href="https://github.com/lrstanley/girc/issues?q=is:open+is:issue+label:enhancement">
+    <img title="Feature requests" src="https://img.shields.io/github/issues/lrstanley/girc/enhancement?label=feature%20requests&style=flat-square">
+  </a>
+  <a href="https://github.com/lrstanley/girc/pulls">
+    <img title="Open Pull Requests" src="https://img.shields.io/github/issues-pr/lrstanley/girc?label=prs&style=flat-square">
+  </a>
+  <a href="https://github.com/lrstanley/girc/discussions/new?category=q-a">
+    <img title="Ask a Question" src="https://img.shields.io/badge/support-ask_a_question!-blue?style=flat-square">
+  </a>
+  <a href="https://liam.sh/chat"><img src="https://img.shields.io/badge/discord-bytecord-blue.svg?style=flat-square" title="Discord Chat"></a>
+</p>
+<!-- template:end:header -->
 
-## Status
+<!-- template:begin:toc -->
+<!-- do not edit anything in this "template" block, its auto-generated -->
+## :link: Table of Contents
 
-**girc is fairly close to marking the 1.0.0 endpoint, which will be tagged as
-necessary, so you will be able to use this with care knowing the specific tag
-you're using won't have breaking changes**
+  - [Features](#features)
+  - [Installing](#installing)
+  - [Examples](#examples)
+  - [References](#references)
+  - [Support &amp; Assistance](#raising_hand_man-support--assistance)
+  - [Contributing](#handshake-contributing)
+  - [License](#balance_scale-license)
+<!-- template:end:toc -->
 
 ## Features
 
@@ -20,7 +62,7 @@ you're using won't have breaking changes**
 - Only requires [standard library packages](https://godoc.org/github.com/lrstanley/girc?imports)
 - Event based triggering/responses ([example](https://godoc.org/github.com/lrstanley/girc#ex-package--Commands), and [CTCP too](https://godoc.org/github.com/lrstanley/girc#Commands.SendCTCP)!)
 - [Documentation](https://godoc.org/github.com/lrstanley/girc) is _mostly_ complete.
-- Support for almost all of the [IRCv3 spec](http://ircv3.net/software/libraries.html).
+- Support for a good portion of the [IRCv3 spec](http://ircv3.net/software/libraries.html).
   - SASL Auth (currently only `PLAIN` and `EXTERNAL` is support by default,
   however you can simply implement `SASLMech` yourself to support additional
   mechanisms.)
@@ -54,35 +96,6 @@ usecases/examples/projects which utilize girc:
 
 Working on a project and want to add it to the list? Submit a pull request!
 
-## Contributing
-
-Please review the [CONTRIBUTING](CONTRIBUTING.md) doc for submitting issues/a guide
-on submitting pull requests and helping out.
-
-## License
-
-    Copyright (c) 2016 Liam Stanley <me@liamstanley.io>
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE.
-
-girc artwork licensed under [CC 3.0](http://creativecommons.org/licenses/by/3.0/) based on Renee French under Creative Commons 3.0 Attributions.
-
 ## References
 
    * [IRCv3: Specification Docs](http://ircv3.net/irc/)
@@ -99,3 +112,61 @@ girc artwork licensed under [CC 3.0](http://creativecommons.org/licenses/by/3.0/
    * [RFC7194: Default Port for Internet Relay Chat (IRC) via TLS/SSL](https://tools.ietf.org/html/rfc7194)
    * [RFC4422: Simple Authentication and Security Layer](https://tools.ietf.org/html/rfc4422) ([SASL EXTERNAL](https://tools.ietf.org/html/rfc4422#appendix-A))
    * [RFC4616: The PLAIN SASL Mechanism](https://tools.ietf.org/html/rfc4616)
+
+
+<!-- template:begin:support -->
+<!-- do not edit anything in this "template" block, its auto-generated -->
+## :raising_hand_man: Support & Assistance
+
+* :heart: Please review the [Code of Conduct](.github/CODE_OF_CONDUCT.md) for
+     guidelines on ensuring everyone has the best experience interacting with
+     the community.
+* :raising_hand_man: Take a look at the [support](.github/SUPPORT.md) document on
+     guidelines for tips on how to ask the right questions.
+* :lady_beetle: For all features/bugs/issues/questions/etc, [head over here](https://github.com/lrstanley/girc/issues/new/choose).
+<!-- template:end:support -->
+
+<!-- template:begin:contributing -->
+<!-- do not edit anything in this "template" block, its auto-generated -->
+## :handshake: Contributing
+
+* :heart: Please review the [Code of Conduct](.github/CODE_OF_CONDUCT.md) for guidelines
+     on ensuring everyone has the best experience interacting with the
+    community.
+* :clipboard: Please review the [contributing](.github/CONTRIBUTING.md) doc for submitting
+     issues/a guide on submitting pull requests and helping out.
+* :old_key: For anything security related, please review this repositories [security policy](https://github.com/lrstanley/girc/security/policy).
+<!-- template:end:contributing -->
+
+<!-- template:begin:license -->
+<!-- do not edit anything in this "template" block, its auto-generated -->
+## :balance_scale: License
+
+```
+MIT License
+
+Copyright (c) 2016 Liam Stanley <me@liamstanley.io>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+_Also located [here](LICENSE)_
+<!-- template:end:license -->
+girc artwork licensed under [CC 3.0](http://creativecommons.org/licenses/by/3.0/)
+based on Renee French under Creative Commons 3.0 Attributions.

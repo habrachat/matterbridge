@@ -87,6 +87,9 @@ func (b *Bslack) populateMessageWithUserInfo(ev *slack.MessageEvent, rmsg *confi
 	if user.Profile.DisplayName != "" {
 		rmsg.Username = user.Profile.DisplayName
 	}
+	if b.GetBool("UseFullName") && user.Profile.RealName != "" {
+		rmsg.Username = user.Profile.RealName
+	}
 	return nil
 }
 
@@ -124,7 +127,7 @@ var (
 	mentionRE        = regexp.MustCompile(`<@([a-zA-Z0-9]+)>`)
 	channelRE        = regexp.MustCompile(`<#[a-zA-Z0-9]+\|(.+?)>`)
 	variableRE       = regexp.MustCompile(`<!((?:subteam\^)?[a-zA-Z0-9]+)(?:\|@?(.+?))?>`)
-	urlRE            = regexp.MustCompile(`<(.*?)(\|.*?)?>`)
+	urlRE            = regexp.MustCompile(`<([^<\|]+)\|([^>]+)>`)
 	codeFenceRE      = regexp.MustCompile(`(?m)^` + "```" + `\w+$`)
 	topicOrPurposeRE = regexp.MustCompile(`(?s)(@.+) (cleared|set)(?: the)? channel (topic|purpose)(?:: (.*))?`)
 )
@@ -178,14 +181,7 @@ func (b *Bslack) replaceVariable(text string) string {
 
 // @see https://api.slack.com/docs/message-formatting#linking_to_urls
 func (b *Bslack) replaceURL(text string) string {
-	for _, r := range urlRE.FindAllStringSubmatch(text, -1) {
-		if len(strings.TrimSpace(r[2])) == 1 { // A display text separator was found, but the text was blank
-			text = strings.Replace(text, r[0], "", 1)
-		} else {
-			text = strings.Replace(text, r[0], r[1], 1)
-		}
-	}
-	return text
+	return urlRE.ReplaceAllString(text, "[${2}](${1})")
 }
 
 func (b *Bslack) replaceb0rkedMarkDown(text string) string {

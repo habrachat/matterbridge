@@ -24,8 +24,8 @@ const (
 )
 
 var (
-	reBackslashOrAmp      = regexp.MustCompile("[\\&]")
-	reEntityOrEscapedChar = regexp.MustCompile("(?i)\\\\" + escapable + "|" + charEntity)
+	reBackslashOrAmp      = regexp.MustCompile(`[\&]`)
+	reEntityOrEscapedChar = regexp.MustCompile(`(?i)\\` + escapable + "|" + charEntity)
 
 	// blockTags is a set of tags that are recognized as HTML block tags.
 	// Any of these can be included in markdown text without special escaping.
@@ -858,12 +858,9 @@ func isFenceLine(data []byte, syntax *string, oldmarker string) (end int, marker
 		return 0, ""
 	}
 
-	// TODO(shurcooL): It's probably a good idea to simplify the 2 code paths here
-	// into one, always get the syntax, and discard it if the caller doesn't care.
-	if syntax != nil {
-		syn := 0
+	// if just read the beginning marker, read the syntax
+	if oldmarker == "" {
 		i = skipChar(data, i, ' ')
-
 		if i >= n {
 			if i == n {
 				return i, marker
@@ -871,41 +868,15 @@ func isFenceLine(data []byte, syntax *string, oldmarker string) (end int, marker
 			return 0, ""
 		}
 
-		syntaxStart := i
-
-		if data[i] == '{' {
-			i++
-			syntaxStart++
-
-			for i < n && data[i] != '}' && data[i] != '\n' {
-				syn++
-				i++
-			}
-
-			if i >= n || data[i] != '}' {
-				return 0, ""
-			}
-
-			// strip all whitespace at the beginning and the end
-			// of the {} block
-			for syn > 0 && isSpace(data[syntaxStart]) {
-				syntaxStart++
-				syn--
-			}
-
-			for syn > 0 && isSpace(data[syntaxStart+syn-1]) {
-				syn--
-			}
-
-			i++
-		} else {
-			for i < n && !isSpace(data[i]) {
-				syn++
-				i++
-			}
+		syntaxStart, syntaxLen := syntaxRange(data, &i)
+		if syntaxStart == 0 && syntaxLen == 0 {
+			return 0, ""
 		}
 
-		*syntax = string(data[syntaxStart : syntaxStart+syn])
+		// caller wants the syntax
+		if syntax != nil {
+			*syntax = string(data[syntaxStart : syntaxStart+syntaxLen])
+		}
 	}
 
 	i = skipChar(data, i, ' ')
@@ -916,6 +887,47 @@ func isFenceLine(data []byte, syntax *string, oldmarker string) (end int, marker
 		return 0, ""
 	}
 	return i + 1, marker // Take newline into account.
+}
+
+func syntaxRange(data []byte, iout *int) (int, int) {
+	n := len(data)
+	syn := 0
+	i := *iout
+	syntaxStart := i
+	if data[i] == '{' {
+		i++
+		syntaxStart++
+
+		for i < n && data[i] != '}' && data[i] != '\n' {
+			syn++
+			i++
+		}
+
+		if i >= n || data[i] != '}' {
+			return 0, 0
+		}
+
+		// strip all whitespace at the beginning and the end
+		// of the {} block
+		for syn > 0 && IsSpace(data[syntaxStart]) {
+			syntaxStart++
+			syn--
+		}
+
+		for syn > 0 && IsSpace(data[syntaxStart+syn-1]) {
+			syn--
+		}
+
+		i++
+	} else {
+		for i < n && !IsSpace(data[i]) {
+			syn++
+			i++
+		}
+	}
+
+	*iout = i
+	return syntaxStart, syn
 }
 
 // fencedCodeBlock returns the end index if data contains a fenced code block at the beginning,
@@ -1407,10 +1419,27 @@ gatherlines:
 
 		chunk := data[line+indentIndex : i]
 
+		// If there is a fence line (marking starting of a code block)
+		// without indent do not process it as part of the list.
+		if p.extensions&FencedCode != 0 {
+			fenceLineEnd, _ := isFenceLine(chunk, nil, "")
+			if fenceLineEnd > 0 && indent == 0 {
+				*flags |= ast.ListItemEndOfList
+				break gatherlines
+			}
+		}
+
 		// evaluate how this line fits in
 		switch {
 		// is this a nested list item?
 		case (p.uliPrefix(chunk) > 0 && !p.isHRule(chunk)) || p.oliPrefix(chunk) > 0 || p.dliPrefix(chunk) > 0:
+
+			// if indent is 4 or more spaces on unordered or ordered lists
+			// we need to add leadingWhiteSpaces + 1 spaces in the beginning of the chunk
+			if indentIndex >= 4 && p.dliPrefix(chunk) <= 0 {
+				leadingWhiteSpaces := skipChar(chunk, 0, ' ')
+				chunk = data[line+indentIndex-(leadingWhiteSpaces+1) : i]
+			}
 
 			// to be a nested list, it must be indented more
 			// if not, it is either a different kind of list
@@ -1484,7 +1513,7 @@ gatherlines:
 		}
 
 		// add the line into the working buffer without prefix
-		raw.Write(data[line+indentIndex : i])
+		raw.Write(chunk)
 
 		line = i
 	}
@@ -1656,6 +1685,12 @@ func (p *Parser) paragraph(data []byte) int {
 			return i
 		}
 
+		// if there's a block quote, paragraph is over
+		if p.quotePrefix(current) > 0 {
+			p.renderParagraph(data[:i])
+			return i
+		}
+
 		// if there's a fenced code block, paragraph is over
 		if p.extensions&FencedCode != 0 {
 			if p.fencedCodeBlock(current, false) > 0 {
@@ -1742,7 +1777,7 @@ func skipUntilChar(data []byte, i int, c byte) int {
 
 func skipAlnum(data []byte, i int) int {
 	n := len(data)
-	for i < n && isAlnum(data[i]) {
+	for i < n && IsAlnum(data[i]) {
 		i++
 	}
 	return i
@@ -1750,7 +1785,7 @@ func skipAlnum(data []byte, i int) int {
 
 func skipSpace(data []byte, i int) int {
 	n := len(data)
-	for i < n && isSpace(data[i]) {
+	for i < n && IsSpace(data[i]) {
 		i++
 	}
 	return i

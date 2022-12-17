@@ -66,7 +66,7 @@ func New(rootLogger *logrus.Logger, cfg *config.Gateway, r *Router) *Gateway {
 func (gw *Gateway) FindCanonicalMsgID(protocol string, mID string) string {
 	ID := protocol + " " + mID
 	if gw.Messages.Contains(ID) {
-		return mID
+		return ID
 	}
 
 	// If not keyed, iterate through cache for downstream, and infer upstream.
@@ -75,7 +75,7 @@ func (gw *Gateway) FindCanonicalMsgID(protocol string, mID string) string {
 		ids := v.([]*BrMsgID)
 		for _, downstreamMsgObj := range ids {
 			if ID == downstreamMsgObj.ID {
-				return strings.Replace(mid.(string), protocol+" ", "", 1)
+				return mid.(string)
 			}
 		}
 	}
@@ -299,10 +299,27 @@ func (gw *Gateway) ignoreMessage(msg *config.Message) bool {
 
 	igNicks := strings.Fields(gw.Bridges[msg.Account].GetString("IgnoreNicks"))
 	igMessages := strings.Fields(gw.Bridges[msg.Account].GetString("IgnoreMessages"))
-	if gw.ignoreTextEmpty(msg) || gw.ignoreText(msg.Username, igNicks) || gw.ignoreText(msg.Text, igMessages) {
+	if gw.ignoreTextEmpty(msg) || gw.ignoreText(msg.Username, igNicks) || gw.ignoreText(msg.Text, igMessages) || gw.ignoreFilesComment(msg.Extra, igMessages) {
 		return true
 	}
 
+	return false
+}
+
+// ignoreFilesComment returns true if we need to ignore a file with matched comment.
+func (gw *Gateway) ignoreFilesComment(extra map[string][]interface{}, igMessages []string) bool {
+	if extra == nil {
+		return false
+	}
+	for _, f := range extra["file"] {
+		fi, ok := f.(config.FileInfo)
+		if !ok {
+			continue
+		}
+		if gw.ignoreText(fi.Comment, igMessages) {
+			return true
+		}
+	}
 	return false
 }
 
@@ -447,16 +464,19 @@ func (gw *Gateway) SendMessage(
 	msg.Avatar = gw.modifyAvatar(rmsg, dest)
 	msg.Username = gw.modifyUsername(rmsg, dest)
 
-	msg.ID = gw.getDestMsgID(rmsg.Protocol+" "+rmsg.ID, dest, channel)
+	// exclude file delete event as the msg ID here is the native file ID that needs to be deleted
+	if msg.Event != config.EventFileDelete {
+		msg.ID = gw.getDestMsgID(rmsg.Protocol+" "+rmsg.ID, dest, channel)
+	}
 
 	// for api we need originchannel as channel
 	if dest.Protocol == apiProtocol {
 		msg.Channel = rmsg.Channel
 	}
 
-	msg.ParentID = gw.getDestMsgID(rmsg.Protocol+" "+canonicalParentMsgID, dest, channel)
+	msg.ParentID = gw.getDestMsgID(canonicalParentMsgID, dest, channel)
 	if msg.ParentID == "" {
-		msg.ParentID = canonicalParentMsgID
+		msg.ParentID = strings.Replace(canonicalParentMsgID, dest.Protocol+" ", "", 1)
 	}
 
 	// if the parentID is still empty and we have a parentID set in the original message

@@ -24,6 +24,13 @@ Password=""
 #OPTIONAL (default false)
 UseTLS=false
 
+#Use client certificate - see CertFP https://libera.chat/guides/certfp.html
+#Specify filename which contains private key and cert
+#OPTIONAL (default "")
+#
+#TLSClientCertificate="cert.pem"
+TLSClientCertificate=""
+
 #Enable SASL (PLAIN) authentication. (libera requires this from eg AWS hosts)
 #It uses NickServNick and NickServPassword as login and password
 #OPTIONAL (default false)
@@ -115,10 +122,11 @@ RejoinDelay=0
 #Only works in IRC right now.
 ColorNicks=false
 
-#RunCommands allows you to send RAW irc commands after connection
+#RunCommands allows you to send RAW irc commands after connection.
+#The string {BOTNICK} (case sensitive) will be replaced with the bot's current nickname.
 #Array of strings
 #OPTIONAL (default empty)
-RunCommands=["PRIVMSG user hello","PRIVMSG chanserv something"]
+RunCommands=["PRIVMSG user hello","PRIVMSG chanserv something", "MODE {BOTNICK} +B"]
 
 #PingDelay specifies how long to wait to send a ping to the irc server.
 #You can use s for second, m for minute
@@ -180,7 +188,7 @@ Label=""
 RemoteNickFormat="[{PROTOCOL}] <{NICK}> "
 
 #Enable to show users joins/parts from other bridges
-#Currently works for messages from the following bridges: irc, mattermost, slack, discord
+#Currently works for messages from the following bridges: irc, mattermost, mumble, slack, discord
 #OPTIONAL (default false)
 ShowJoinPart=false
 
@@ -190,7 +198,7 @@ ShowJoinPart=false
 VerboseJoinPart=false
 
 #Do not send joins/parts to other bridges
-#Currently works for messages from the following bridges: irc, mattermost, slack
+#Currently works for messages from the following bridges: irc, mattermost, mumble, slack, discord
 #OPTIONAL (default false)
 NoSendJoinPart=false
 
@@ -317,7 +325,7 @@ Label=""
 RemoteNickFormat="[{PROTOCOL}] <{NICK}> "
 
 #Enable to show users joins/parts from other bridges
-#Currently works for messages from the following bridges: irc, mattermost, slack, discord
+#Currently works for messages from the following bridges: irc, mattermost, mumble, slack, discord
 #OPTIONAL (default false)
 ShowJoinPart=false
 
@@ -401,6 +409,10 @@ SkipTLSVerify=true
 ## RELOADABLE SETTINGS
 ## Settings below can be reloaded by editing the file
 
+# UseUserName shows the username instead of the server nickname
+# OPTIONAL (default false)
+UseUserName=false
+
 #how to format the list of IRC nicks when displayed in mattermost.
 #Possible options are "table" and "plain"
 #OPTIONAL (default plain)
@@ -480,12 +492,12 @@ Label=""
 RemoteNickFormat="[{PROTOCOL}] <{NICK}> "
 
 #Enable to show users joins/parts from other bridges
-#Currently works for messages from the following bridges: irc, mattermost, slack, discord
+#Currently works for messages from the following bridges: irc, mattermost, mumble, slack, discord
 #OPTIONAL (default false)
 ShowJoinPart=false
 
 #Do not send joins/parts to other bridges
-#Currently works for messages from the following bridges: irc, mattermost, slack
+#Currently works for messages from the following bridges: irc, mattermost, mumble, slack, discord
 #OPTIONAL (default false)
 NoSendJoinPart=false
 
@@ -567,7 +579,7 @@ Label=""
 RemoteNickFormat="[{PROTOCOL}] <{NICK}> "
 
 #Enable to show users joins/parts from other bridges
-#Currently works for messages from the following bridges: irc, mattermost, slack, discord
+#Currently works for messages from the following bridges: irc, mattermost, mumble, slack, discord
 #OPTIONAL (default false)
 ShowJoinPart=false
 
@@ -675,7 +687,7 @@ Label=""
 RemoteNickFormat="[{PROTOCOL}] <{NICK}> "
 
 #Enable to show users joins/parts from other bridges
-#Currently works for messages from the following bridges: irc, mattermost, slack, discord
+#Currently works for messages from the following bridges: irc, mattermost, mumble, slack, discord
 #OPTIONAL (default false)
 ShowJoinPart=false
 
@@ -814,12 +826,12 @@ Label=""
 RemoteNickFormat="[{PROTOCOL}] <{NICK}> "
 
 #Enable to show users joins/parts from other bridges
-#Currently works for messages from the following bridges: irc, mattermost, slack, discord
+#Currently works for messages from the following bridges: irc, mattermost, mumble, slack, discord
 #OPTIONAL (default false)
 ShowJoinPart=false
 
 #Do not send joins/parts to other bridges
-#Currently works for messages from the following bridges: irc, mattermost, slack
+#Currently works for messages from the following bridges: irc, mattermost, mumble, slack, discord
 #OPTIONAL (default false)
 NoSendJoinPart=false
 
@@ -850,6 +862,10 @@ ShowUserTyping=false
 #Message to show when a message is too big
 #Default "<clipped message>"
 MessageClipped="<clipped message>"
+
+#If enabled use the slack "Real Name" as username.
+#OPTIONAL (default false)
+UseFullName=false
 
 ###################################################################
 #discord section
@@ -1025,6 +1041,12 @@ DisableWebPagePreview=false
 #OPTIONAL (default false)
 UseFirstName=false
 
+#If enabled use the "Full Name" as username. If this is empty use the Username
+#If disabled use the "Username" as username. If this is empty use the First Name and Last Name as Full Name
+#If all names are empty, username will be "unknown"
+#OPTIONAL (default false)
+UseFullName=false
+
 #WARNING! If enabled this will relay GIF/stickers/documents and other attachments as URLs
 #Those URLs will contain your bot-token. This may not be what you want.
 #For now there is no secure way to relay GIF/stickers/documents without seeing your token.
@@ -1116,7 +1138,7 @@ Label=""
 RemoteNickFormat="[{PROTOCOL}] <{NICK}> "
 
 #Enable to show users joins/parts from other bridges
-#Currently works for messages from the following bridges: irc, mattermost, slack, discord
+#Currently works for messages from the following bridges: irc, mattermost, mumble, slack, discord
 #OPTIONAL (default false)
 ShowJoinPart=false
 
@@ -1129,6 +1151,12 @@ StripNick=false
 #Only works hiding/show topic changes from slack bridge for now
 #OPTIONAL (default false)
 ShowTopicChange=false
+
+#Opportunistically preserve threaded replies between Telegram groups.
+#This only works if the parent message is still in the cache.
+#Cache is flushed between restarts.
+#OPTIONAL (default false)
+PreserveThreading=false
 
 ###################################################################
 #rocketchat section
@@ -1247,7 +1275,7 @@ Label=""
 RemoteNickFormat="[{PROTOCOL}] <{NICK}> "
 
 #Enable to show users joins/parts from other bridges
-#Currently works for messages from the following bridges: irc, mattermost, slack, discord
+#Currently works for messages from the following bridges: irc, mattermost, mumble, slack, discord
 #OPTIONAL (default false)
 ShowJoinPart=false
 
@@ -1301,6 +1329,15 @@ HTMLDisable=false
 # UseUserName shows the username instead of the server nickname
 UseUserName=false
 
+# Matrix quotes replies and as of matterbridge 1.24.0 we strip those as this causes
+# issues with bridges support threading and have PreserveThreading enabled.
+# But if you for example use mattermost or discord with webhooks you'll need to enable 
+# this (and keep PreserveThreading disabled) if you want something that looks like a reply from matrix.
+# See issues: 
+# - https://github.com/42wim/matterbridge/issues/1819
+# - https://github.com/42wim/matterbridge/issues/1780
+KeepQuotedReply=false
+
 #Nicks you want to ignore.
 #Regular expressions supported
 #Messages from those users will not be sent to other bridges.
@@ -1350,9 +1387,14 @@ Label=""
 RemoteNickFormat="[{PROTOCOL}] <{NICK}> "
 
 #Enable to show users joins/parts from other bridges
-#Currently works for messages from the following bridges: irc, mattermost, slack, discord
+#Currently works for messages from the following bridges: irc, mattermost, mumble, slack, discord
 #OPTIONAL (default false)
 ShowJoinPart=false
+
+#Rename the bot in the current room to the username of the message
+#This will make an additional API request per message and will probably count towards rate limits
+#OPTIONAL (default false)
+SpoofUsername=false
 
 #StripNick only allows alphanumerical nicks. See https://github.com/42wim/matterbridge/issues/285
 #It will strip other characters from the nick
@@ -1442,7 +1484,7 @@ Label=""
 RemoteNickFormat="[{PROTOCOL}] <{NICK}> "
 
 #Enable to show users joins/parts from other bridges
-#Currently works for messages from the following bridges: irc, mattermost, slack, discord
+#Currently works for messages from the following bridges: irc, mattermost, mumble, slack, discord
 #OPTIONAL (default false)
 ShowJoinPart=false
 
@@ -1530,6 +1572,15 @@ SkipTLSVerify=false
 #Default "<clipped message>"
 MessageClipped="<clipped message>"
 
+#Enable to show users joins/parts from other bridges
+#Currently works for messages from the following bridges: irc, mattermost, mumble, slack, discord
+#OPTIONAL (default false)
+ShowJoinPart=false
+
+#Do not send joins/parts to other bridges
+#OPTIONAL (default false)
+NoSendJoinPart=false
+
 ###################################################################
 #VK
 ###################################################################
@@ -1538,10 +1589,6 @@ MessageClipped="<clipped message>"
 #Group access token
 #See https://vk.com/dev/bots_docs
 Token="Yourtokenhere"
-
-#Group ID
-#For example in URL https://vk.com/public168963511 group ID is 168963511
-GroupID=123456789
 
 ###################################################################
 # WhatsApp
@@ -1646,7 +1693,7 @@ Label=""
 RemoteNickFormat="[{PROTOCOL}] <{NICK}> "
 
 #Enable to show users joins/parts from other bridges
-#Currently works for messages from the following bridges: irc, mattermost, slack, discord
+#Currently works for messages from the following bridges: irc, mattermost, mumble, slack, discord
 #OPTIONAL (default false)
 ShowJoinPart=false
 
@@ -1890,7 +1937,8 @@ enable=true
     # -------------------------------------------------------------------------------------------------------------------------------------
     #    irc     |      channel       |            #general           | The # symbol is required and should be lowercase!
     # -------------------------------------------------------------------------------------------------------------------------------------
-    # mattermost |      channel       |            general            | This is the channel name as seen in the URL, not the display name
+    #            |      channel       |            general            | This is the channel name as seen in the URL, not the display name
+    # mattermost |    channel id      | ID:oc4wifyuojgw5f3nsuweesmz8w | This is the channel ID (only use if you know what you're doing)
     # -------------------------------------------------------------------------------------------------------------------------------------
     #   matrix   | #channel:server    |    #yourchannel:matrix.org    | Encrypted rooms are not supported in matrix
     # -------------------------------------------------------------------------------------------------------------------------------------
