@@ -499,7 +499,11 @@ func (b *Btelegram) handleUploadFile(msg *config.Message, chatid int64, parentID
 func (b *Btelegram) handleQuote(message, quoteNick, quoteMessage string) string {
 	format := b.GetString("quoteformat")
 	if format == "" {
-		format = "{MESSAGE} (re @{QUOTENICK}: {QUOTEMESSAGE})"
+		if quoteNick == "habrabridge_bot" {
+			format = "{MESSAGE} (re {QUOTEMESSAGE})"
+		} else {
+			format = "{MESSAGE} (re [T] {QUOTENICK} {QUOTEMESSAGE})"
+		}
 	}
 	quoteMessagelength := len([]rune(quoteMessage))
 	if b.GetInt("QuoteLengthLimit") != 0 && quoteMessagelength >= b.GetInt("QuoteLengthLimit") {
