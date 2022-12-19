@@ -332,6 +332,12 @@ func (b *Bxmpp) handleXMPP() error {
 					Event:    event,
 				}
 
+				rmsg.Text = strings.ReplaceAll(rmsg.Text, "\\", "\\\\")
+				rmsg.Text = strings.ReplaceAll(rmsg.Text, "*", "\\*")
+				rmsg.Text = strings.ReplaceAll(rmsg.Text, "_", "\\_")
+				rmsg.Text = strings.ReplaceAll(rmsg.Text, "~", "\\~")
+				rmsg.Text = strings.ReplaceAll(rmsg.Text, "`", "\\`")
+
 				// Check if we have an action event.
 				var ok bool
 				rmsg.Text, ok = b.replaceAction(rmsg.Text)
