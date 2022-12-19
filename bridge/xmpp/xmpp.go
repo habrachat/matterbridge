@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -67,6 +68,10 @@ func (b *Bxmpp) JoinChannel(channel config.ChannelInfo) error {
 	return nil
 }
 
+func stripBackslashes(text string) string {
+	return regexp.MustCompile(`\\(.)`).ReplaceAllString(text, "$1")
+}
+
 func (b *Bxmpp) Send(msg config.Message) (string, error) {
 	// should be fixed by using a cache instead of dropping
 	if !b.Connected() {
@@ -100,7 +105,7 @@ func (b *Bxmpp) Send(msg config.Message) (string, error) {
 				_, err = b.xc.Send(xmpp.Chat{
 					Type:   "groupchat",
 					Remote: rmsg.Channel + "@" + b.GetString("Muc"),
-					Text:   rmsg.Username + rmsg.Text,
+					Text:   rmsg.Username + stripBackslashes(rmsg.Text),
 				})
 			}
 
@@ -134,7 +139,7 @@ func (b *Bxmpp) Send(msg config.Message) (string, error) {
 	if _, err := b.xc.Send(xmpp.Chat{
 		Type:      "groupchat",
 		Remote:    msg.Channel + "@" + b.GetString("Muc"),
-		Text:      msg.Username + msg.Text,
+		Text:      msg.Username + stripBackslashes(msg.Text),
 		ID:        msgID,
 		ReplaceID: msgReplaceID,
 	}); err != nil {
