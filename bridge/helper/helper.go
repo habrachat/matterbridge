@@ -221,7 +221,7 @@ func ClipMessage(text string, length int, clippingMessage string) string {
 
 // ParseMarkdown takes in an input string as markdown and parses it to html
 func ParseMarkdown(input string) string {
-	extensions := parser.HardLineBreak | parser.NoIntraEmphasis | parser.FencedCode
+	extensions := parser.Strikethrough | parser.HardLineBreak | parser.NoIntraEmphasis | parser.FencedCode
 	markdownParser := parser.NewWithExtensions(extensions)
 	renderer := html.NewRenderer(html.RendererOptions{
 		Flags: 0,
