@@ -540,8 +540,8 @@ func (b *Btelegram) handleEntities(rmsg *config.Message, message *tgbotapi.Messa
 				b.Log.Errorf("entity length is too long %d > %d", offset+e.Length, len(utfEncodedString))
 				continue
 			}
-			rmsg.Text = string(utf16.Decode(asRunes[:offset+e.Length])) + " (" + url.String() + ")" + string(utf16.Decode(asRunes[offset+e.Length:]))
-			indexMovedBy += len(url.String()) + 3
+			rmsg.Text = string(utf16.Decode(asRunes[:offset])) + "[" + string(utf16.Decode(asRunes[offset:offset+e.Length])) + "](" + url.String() + ")" + string(utf16.Decode(asRunes[offset+e.Length:]))
+			indexMovedBy += len(url.String()) + 4
 			prevLinkOffset = e.Offset
 		}
 
@@ -551,19 +551,19 @@ func (b *Btelegram) handleEntities(rmsg *config.Message, message *tgbotapi.Messa
 
 		if e.Type == "bold" {
 			offset := e.Offset + indexMovedBy
-			rmsg.Text = rmsg.Text[:offset] + "**" + rmsg.Text[offset:offset+e.Length] + "**" + rmsg.Text[offset+e.Length:]
+			rmsg.Text = string(utf16.Decode(asRunes[:offset])) + "**" + string(utf16.Decode(asRunes[offset:offset+e.Length])) + "**" + string(utf16.Decode(asRunes[offset+e.Length:]))
 			indexMovedBy += 4
 		}
 
 		if e.Type == "italic" {
 			offset := e.Offset + indexMovedBy
-			rmsg.Text = rmsg.Text[:offset] + "*" + rmsg.Text[offset:offset+e.Length] + "*" + rmsg.Text[offset+e.Length:]
+			rmsg.Text = string(utf16.Decode(asRunes[:offset])) + "*" + string(utf16.Decode(asRunes[offset:offset+e.Length])) + "*" + string(utf16.Decode(asRunes[offset+e.Length:]))
 			indexMovedBy += 2
 		}
 
 		if e.Type == "strikethrough" {
 			offset := e.Offset + indexMovedBy
-			rmsg.Text = rmsg.Text[:offset] + "~~" + rmsg.Text[offset:offset+e.Length] + "~~" + rmsg.Text[offset+e.Length:]
+			rmsg.Text = string(utf16.Decode(asRunes[:offset])) + "~~" + string(utf16.Decode(asRunes[offset:offset+e.Length])) + "~~" + string(utf16.Decode(asRunes[offset+e.Length:]))
 			indexMovedBy += 4
 		}
 
@@ -577,22 +577,6 @@ func (b *Btelegram) handleEntities(rmsg *config.Message, message *tgbotapi.Messa
 			offset := e.Offset + indexMovedBy
 			rmsg.Text = string(utf16.Decode(asRunes[:offset])) + "```\n" + string(utf16.Decode(asRunes[offset:offset+e.Length])) + "```\n" + string(utf16.Decode(asRunes[offset+e.Length:]))
 			indexMovedBy += 8
-		}
-
-		if e.Type == "bold" {
-			offset := e.Offset + indexMovedBy
-			rmsg.Text = string(utf16.Decode(asRunes[:offset])) + "*" + string(utf16.Decode(asRunes[offset:offset+e.Length])) + "*" + string(utf16.Decode(asRunes[offset+e.Length:]))
-			indexMovedBy += 2
-		}
-		if e.Type == "italic" {
-			offset := e.Offset + indexMovedBy
-			rmsg.Text = string(utf16.Decode(asRunes[:offset])) + "_" + string(utf16.Decode(asRunes[offset:offset+e.Length])) + "_" + string(utf16.Decode(asRunes[offset+e.Length:]))
-			indexMovedBy += 2
-		}
-		if e.Type == "strike" {
-			offset := e.Offset + indexMovedBy
-			rmsg.Text = string(utf16.Decode(asRunes[:offset])) + "~" + string(utf16.Decode(asRunes[offset:offset+e.Length])) + "~" + string(utf16.Decode(asRunes[offset+e.Length:]))
-			indexMovedBy += 2
 		}
 	}
 }
