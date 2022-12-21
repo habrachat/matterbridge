@@ -171,11 +171,17 @@ func (b *Birc) Send(msg config.Message) (string, error) {
 	if b.GetBool("StripMarkdown") {
 		msg.Text = stripmd.Strip(msg.Text)
 	} else {
-		re := regexp.MustCompile(`\b(\*\*|__)|(\*\*|__)\b`)
-		msg.Text = re.ReplaceAllString(msg.Text, "\x02")
+		re := regexp.MustCompile("(^|\\s)`((?:\\\\?.)*?)`")
+		msg.Text = re.ReplaceAllString(msg.Text, "$1\x0303$2\x03")
 
-		re = regexp.MustCompile(`\b(\*|_)|(\*|_)\b`)
-		msg.Text = re.ReplaceAllString(msg.Text, "\x1d")
+		re = regexp.MustCompile(`([^\\])\b(?:\*\*|__)|(?:\*\*|__)\b([^\\])`)
+		msg.Text = re.ReplaceAllString(msg.Text, "$1\x02$2")
+
+		re = regexp.MustCompile(`([^\\])\b(?:\*|_)|(?:\*|_)\b([^\\])`)
+		msg.Text = re.ReplaceAllString(msg.Text, "$1\x1d$2")
+
+		re = regexp.MustCompile(`\\(.)`)
+		msg.Text = re.ReplaceAllString(msg.Text, "$1")
 	}
 
 	if b.GetBool("MessageSplit") {
