@@ -71,11 +71,12 @@ func (gw *Gateway) FindCanonicalMsgID(protocol string, mID string) string {
 
 	// If not keyed, iterate through cache for downstream, and infer upstream.
 	for _, mid := range gw.Messages.Keys() {
-		v, _ := gw.Messages.Peek(mid)
-		ids := v.([]*BrMsgID)
-		for _, downstreamMsgObj := range ids {
-			if ID == downstreamMsgObj.ID {
-				return mid.(string)
+		if v, exists := gw.Messages.Peek(mid); exists {
+			ids := v.([]*BrMsgID)
+			for _, downstreamMsgObj := range ids {
+				if ID == downstreamMsgObj.ID {
+					return mid.(string)
+				}
 			}
 		}
 	}

@@ -140,7 +140,6 @@ func (r *Router) handleReceive() {
 		filesHandled := false
 		for _, gw := range r.Gateways {
 			// record all the message ID's of the different bridges
-			var msgIDs []*BrMsgID
 			if gw.ignoreMessage(&msg) {
 				continue
 			}
@@ -151,20 +150,7 @@ func (r *Router) handleReceive() {
 				filesHandled = true
 			}
 			for _, br := range gw.Bridges {
-				msgIDs = append(msgIDs, gw.handleMessage(&msg, br)...)
-			}
-
-			if msg.ID != "" {
-				_, exists := gw.Messages.Get(msg.Protocol + " " + msg.ID)
-
-				// Only add the message ID if it doesn't already exist
-				//
-				// For some bridges we always add/update the message ID.
-				// This is necessary as msgIDs will change if a bridge returns
-				// a different ID in response to edits.
-				if !exists {
-					gw.Messages.Add(msg.Protocol+" "+msg.ID, msgIDs)
-				}
+				gw.handleMessage(&msg, br)
 			}
 		}
 	}

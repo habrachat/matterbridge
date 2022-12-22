@@ -187,31 +187,28 @@ func (gw *Gateway) ignoreEvent(event string, dest *bridge.Bridge) bool {
 }
 
 // handleMessage makes sure the message get sent to the correct bridge/channels.
-// Returns an array of msg ID's
-func (gw *Gateway) handleMessage(rmsg *config.Message, dest *bridge.Bridge) []*BrMsgID {
-	var brMsgIDs []*BrMsgID
-
+func (gw *Gateway) handleMessage(rmsg *config.Message, dest *bridge.Bridge) {
 	// Not all bridges support "user is typing" indications so skip the message
 	// if the targeted bridge does not support it.
 	if rmsg.Event == config.EventUserTyping {
 		if _, ok := bridgemap.UserTypingSupport[dest.Protocol]; !ok {
-			return nil
+			return
 		}
 	}
 
 	// if we have an attached file, or other info
 	if rmsg.Extra != nil && len(rmsg.Extra[config.EventFileFailureSize]) != 0 && rmsg.Text == "" {
-		return brMsgIDs
+		return
 	}
 
 	if gw.ignoreEvent(rmsg.Event, dest) {
-		return brMsgIDs
+		return
 	}
 
 	// broadcast to every out channel (irc QUIT)
 	if rmsg.Channel == "" && rmsg.Event != config.EventJoinLeave {
 		gw.logger.Debug("empty channel")
-		return brMsgIDs
+		return
 	}
 
 	// Get the ID of the parent message in thread
@@ -222,18 +219,26 @@ func (gw *Gateway) handleMessage(rmsg *config.Message, dest *bridge.Bridge) []*B
 
 	channels := gw.getDestChannel(rmsg, *dest)
 	for idx := range channels {
+		idx := idx
 		channel := &channels[idx]
-		msgID, err := gw.SendMessage(rmsg, dest, channel, canonicalParentMsgID)
-		if err != nil {
-			gw.logger.Errorf("SendMessage failed: %s", err)
-			continue
-		}
-		if msgID == "" {
-			continue
-		}
-		brMsgIDs = append(brMsgIDs, &BrMsgID{dest, dest.Protocol + " " + msgID, channel.ID})
+
+		go func() {
+			msgID, err := gw.SendMessage(rmsg, dest, channel, canonicalParentMsgID)
+			if err != nil {
+				gw.logger.Errorf("SendMessage failed: %s", err)
+				return
+			}
+			if rmsg.ID == "" || msgID == "" {
+				return
+			}
+			brMsgIDs, _ := gw.Messages.Get(rmsg.Protocol + " " + rmsg.ID)
+			if brMsgIDs == nil {
+				brMsgIDs = []*BrMsgID{}
+			}
+			brMsgIDs = append(brMsgIDs.([]*BrMsgID), &BrMsgID{dest, dest.Protocol + " " + msgID, channel.ID})
+			gw.Messages.Add(rmsg.Protocol + " " + rmsg.ID, brMsgIDs)
+		}()
 	}
-	return brMsgIDs
 }
 
 func (gw *Gateway) handleExtractNicks(msg *config.Message) {
