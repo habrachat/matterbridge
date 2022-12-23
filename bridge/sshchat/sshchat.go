@@ -168,22 +168,30 @@ func (b *Bsshchat) handleSSHChat() error {
 			}
 			if !wait {
 				b.Log.Debugf("<= Message %#v", res)
+				var rmsg config.Message
 				if strings.HasPrefix(text, "** ") {
 					// Emote
+					var username string
 					if text[3] == '"' {
 						res := strings.Split(text[3:], "\"")
-						rmsg := config.Message{Username: res[1], Text: strings.TrimSpace(strings.Join(res[2:], "\"")), Channel: "sshchat", Account: b.Account, UserID: "nick", Event: config.EventUserAction}
-						b.Remote <- rmsg
+						username = res[1]
+						text = strings.Join(res[2:], "\"")
 					} else {
 						res := strings.Split(text[3:], " ")
-						rmsg := config.Message{Username: res[0], Text: strings.TrimSpace(strings.Join(res[1:], " ")), Channel: "sshchat", Account: b.Account, UserID: "nick", Event: config.EventUserAction}
-						b.Remote <- rmsg
+						username = res[0]
+						text = strings.Join(res[1:], " ")
 					}
+					text = strings.ReplaceAll(text, "\\", "\\\\")
+					text = strings.ReplaceAll(text, "*", "\\*")
+					text = strings.ReplaceAll(text, "_", "\\_")
+					text = strings.ReplaceAll(text, "~", "\\~")
+					text = strings.ReplaceAll(text, "`", "\\`")
+					rmsg = config.Message{Username: username, Text: strings.TrimSpace(text), Channel: "sshchat", Account: b.Account, UserID: "nick", Event: config.EventUserAction}
 				} else {
 					// Normal message
-					rmsg := config.Message{Username: res[0], Text: strings.TrimSpace(strings.Join(res[1:], ":")), Channel: "sshchat", Account: b.Account, UserID: "nick"}
-					b.Remote <- rmsg
+					rmsg = config.Message{Username: res[0], Text: strings.TrimSpace(strings.Join(res[1:], ":")), Channel: "sshchat", Account: b.Account, UserID: "nick"}
 				}
+				b.Remote <- rmsg
 			}
 		}
 	}
