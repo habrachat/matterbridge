@@ -81,7 +81,7 @@ func (b *Bsshchat) Send(msg config.Message) (string, error) {
 	string_message := ""
 	for _, line := range strings.Split(msg.Text, "\n") {
 		if strings.TrimSpace(line) != "" {
-			if line[0] == '/' {
+			if strings.HasPrefix(strings.TrimLeft(line, " "), "/") {
 				line = " " + line
 			}
 			string_message += prefix + line + "\r\n"
@@ -91,7 +91,7 @@ func (b *Bsshchat) Send(msg config.Message) (string, error) {
 		for _, rmsg := range helper.HandleExtra(&msg, b.General) {
 			for _, line := range strings.Split(rmsg.Text, "\n") {
 				if strings.TrimSpace(line) != "" {
-					if line[0] == '/' {
+					if strings.HasPrefix(strings.TrimLeft(line, " "), "/") {
 						line = " " + line
 					}
 					string_message += prefix + line + "\r\n"
